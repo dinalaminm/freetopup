@@ -1,0 +1,351 @@
+<!-- START OF FILE Auto Payment Integrated (Dynamic Numbers & Balance Update) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Add Money - CRD TOPAP</title>
+    
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;900&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F5F7FA; }
+        [v-cloak] { display: none !important; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #64748b; text-decoration: none; }
+        .nav-item i { font-size: 18px; margin-bottom: 4px; }
+        .nav-item.active { color: #0F6E5C; font-weight: 700; }
+        
+        /* Animations */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        /* Loader */
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #fff; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-[#F5F7FA]">
+
+    <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative flex flex-col">
+        
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm border-b p-3 flex items-center sticky top-0 z-50">
+            <a v-if="step === 1" href="index.html" class="mr-3 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></a>
+            <button v-else @click="step--" class="mr-3 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+            <h1 class="font-bold text-lg text-[#101828]" style="font-family:'Sora',sans-serif;">Add Money (Auto)</h1>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-grow p-4 pb-24">
+            
+            <!-- STEP 1: AMOUNT -->
+            <transition name="fade">
+                <div v-if="step === 1" class="flex flex-col h-full justify-center">
+                    <div class="bg-white p-6 rounded-2xl shadow-[0_2px_16px_rgba(16,24,40,0.08)] border border-gray-200">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-gradient-to-br from-[#0F6E5C] to-[#0B5446] rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-md">
+                                <i class="fa-solid fa-bolt text-2xl"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Instant Recharge</h2>
+                            <p class="text-xs text-gray-500 mt-1">Automated Payment Gateway</p>
+                        </div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">Enter Amount</label>
+                        <div class="relative mb-6">
+                            <span class="absolute left-4 top-3.5 text-gray-500 font-bold">৳</span>
+                            <input v-model="amount" type="number" placeholder="0" class="w-full border border-gray-300 py-3 pl-8 pr-4 rounded-xl text-lg font-bold outline-none focus:border-emerald-500 transition">
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 mb-6">
+                            <button @click="amount = 100" class="border rounded-lg py-1 text-xs font-bold hover:bg-emerald-50">100</button>
+                            <button @click="amount = 300" class="border rounded-lg py-1 text-xs font-bold hover:bg-emerald-50">300</button>
+                            <button @click="amount = 500" class="border rounded-lg py-1 text-xs font-bold hover:bg-emerald-50">500</button>
+                            <button @click="amount = 1000" class="border rounded-lg py-1 text-xs font-bold hover:bg-emerald-50">1000</button>
+                        </div>
+                        <button @click="goToMethod" class="w-full bg-[#0F6E5C] text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition flex justify-center items-center gap-2">Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- STEP 2: METHOD -->
+            <transition name="fade">
+                <div v-if="step === 2">
+                    <h2 class="font-bold text-gray-700 mb-4">Select Payment Method</h2>
+                    <div class="space-y-3">
+                        <div @click="selectMethod('bkash')" class="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:border-pink-500 shadow-sm transition">
+                            <div class="flex items-center gap-4">
+                                <img src="https://seeklogo.com/images/B/bkash-logo-FBB258B90F-seeklogo.com.png" class="w-10">
+                                <span class="font-bold text-gray-700">bKash (Personal)</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div @click="selectMethod('nagad')" class="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:border-orange-500 shadow-sm transition">
+                            <div class="flex items-center gap-4">
+                                <img src="https://seeklogo.com/images/N/nagad-logo-7A70CCFEE0-seeklogo.com.png" class="w-10">
+                                <span class="font-bold text-gray-700">Nagad (Personal)</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div @click="selectMethod('rocket')" class="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between cursor-pointer hover:border-emerald-500 shadow-sm transition">
+                            <div class="flex items-center gap-4">
+                                <img src="https://seeklogo.com/images/D/dutch-bangla-rocket-logo-B4D1CC458D-seeklogo.com.png" class="w-10">
+                                <span class="font-bold text-gray-700">Rocket (Personal)</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- STEP 3: VERIFY PAYMENT (INTEGRATED) -->
+            <transition name="fade">
+                <div v-if="step === 3" class="h-full flex flex-col justify-center">
+                    
+                    <!-- SUCCESS VIEW -->
+                    <div v-if="paymentSuccess" class="bg-white p-8 rounded-2xl shadow-lg border border-green-200 text-center">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+                            <i class="fa-solid fa-check text-4xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
+                        <p class="text-gray-500 mb-6">Your balance has been updated.</p>
+                        <div class="bg-gray-50 p-4 rounded-xl text-left mb-6 text-sm">
+                            <div class="flex justify-between mb-2"><span>Amount:</span> <span class="font-bold">৳ {{ amount }}</span></div>
+                            <div class="flex justify-between mb-2"><span>Method:</span> <span class="font-bold capitalize">{{ method }}</span></div>
+                            <div class="flex justify-between"><span>TrxID:</span> <span class="font-bold text-gray-700">{{ trxId }}</span></div>
+                        </div>
+                        <a href="account.html" class="block w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">Go to Wallet</a>
+                    </div>
+
+                    <!-- VERIFICATION FORM VIEW -->
+                    <div v-else class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 text-center">
+                        <div class="mb-4">
+                            <img :src="methodLogo" class="h-12 mx-auto object-contain">
+                        </div>
+                        
+                        <h2 class="text-xl font-bold text-gray-800 mb-1">Send Money</h2>
+                        <p class="text-gray-500 text-xs mb-4">Send <b>৳ {{ amount }}</b> (Send Money) to:</p>
+
+                        <!-- Copy Number Section -->
+                        <div @click="copyNumber" class="bg-[#EAF6F2] border border-[#0F6E5C]/30 border-dashed rounded-xl p-3 mb-6 cursor-pointer active:scale-95 transition relative">
+                            <p class="text-xs text-[#0F6E5C] font-bold mb-1">PERSONAL NUMBER</p>
+                            <!-- 🔥 DYNAMIC NUMBER DISPLAY 🔥 -->
+                            <h3 class="text-2xl font-black text-gray-800 tracking-wider">
+                                {{ currentAdminNumber }}
+                            </h3>
+                            <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-center gap-1">
+                                <i class="fa-regular fa-copy"></i> Tap to copy
+                            </div>
+                        </div>
+
+                        <!-- Input Section -->
+                        <div class="text-left mb-4">
+                            <label class="block text-xs font-bold text-gray-600 mb-1 ml-1">Transaction ID (TrxID)</label>
+                            <input v-model="trxId" type="text" placeholder="e.g. 9G765KH..." class="w-full border border-gray-300 py-3 px-4 rounded-xl text-lg font-bold outline-none focus:border-emerald-500 transition uppercase text-center tracking-widest">
+                        </div>
+
+                        <!-- Error Message -->
+                        <div v-if="errorMsg" class="bg-red-50 text-red-600 text-xs p-3 rounded-lg mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-exclamation"></i> {{ errorMsg }}
+                        </div>
+
+                        <button @click="verifyPayment" :disabled="loading" 
+                            :class="gatewayButtonColor"
+                            class="w-full text-white py-3.5 rounded-xl font-bold shadow-lg transition flex justify-center items-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+                            <span v-if="loading" class="loader border-white/30 border-t-white"></span>
+                            <span v-else>VERIFY PAYMENT</span>
+                        </button>
+
+                        <p class="text-[10px] text-gray-400 mt-4">
+                            Automated System by DinGet API Manager
+                        </p>
+                    </div>
+
+                </div>
+            </transition>
+
+        </main>
+
+        <!-- BOTTOM NAV -->
+        <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div class="grid grid-cols-5 h-16 max-w-md mx-auto">
+                <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+                <a href="add-money.html" class="nav-item active"><i class="fa-solid fa-wallet"></i><span>Add Money</span></a>
+                <a href="orders.html" class="nav-item"><i class="fa-solid fa-file-invoice"></i><span>My Orders</span></a>
+                <a href="codes.html" class="nav-item"><i class="fa-solid fa-gift"></i><span>My Codes</span></a>
+                <a href="account.html" class="nav-item"><i class="fa-solid fa-user"></i><span>Account</span></a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // 🔥 Import update: getDoc যুক্ত করা হয়েছে
+        import { getFirestore, collection, addDoc, serverTimestamp, updateDoc, doc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { createApp, ref, computed, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygDTGvbG7sUTPAt2lO2iMsPHprZRlP7WjAwq4n4Q3D1SZduenpNPUaayf_c2VsTqC0Xw/exec"; 
+        const CLIENT_API_KEY = "KEY_LUYAAAKNC_1770036903949"; 
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyACUK207BRvtR5yc1UhYLS9FlMitVVlrrE",
+          authDomain: "freetopup-fd263.firebaseapp.com",
+          projectId: "freetopup-fd263",
+          storageBucket: "freetopup-fd263.firebasestorage.app",
+          messagingSenderId: "756173302110",
+          appId: "1:756173302110:web:14227664f6b5d14d9047cf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        createApp({
+            setup() {
+                const step = ref(1);
+                const amount = ref('');
+                const method = ref('');
+                const loading = ref(false);
+                const userId = ref(null);
+                const trxId = ref('');
+                const errorMsg = ref('');
+                const paymentSuccess = ref(false);
+                
+                // 🔥 NEW: Store Admin Numbers from DB
+                const adminNumbers = ref({
+                    bkash: "Loading...",
+                    nagad: "Loading...",
+                    rocket: "Loading..."
+                });
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId.value = user.uid;
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+
+                // 🔥 FETCH NUMBERS FROM FIREBASE
+                const fetchPaymentSettings = async () => {
+                    try {
+                        const docRef = doc(db, "settings", "payment");
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists()) {
+                            adminNumbers.value = docSnap.data();
+                        } else {
+                            console.log("No payment settings found!");
+                        }
+                    } catch (e) {
+                        console.error("Error fetching numbers:", e);
+                    }
+                };
+
+                // পেজ লোড হলে নাম্বার আনবে
+                onMounted(() => {
+                    fetchPaymentSettings();
+                });
+
+                const goToMethod = () => {
+                    if(!amount.value || amount.value < 10) {
+                        alert("Minimum amount is 10 BDT");
+                        return;
+                    }
+                    step.value = 2;
+                };
+
+                const selectMethod = (m) => {
+                    method.value = m;
+                    step.value = 3;
+                    trxId.value = '';
+                    errorMsg.value = '';
+                };
+
+                const copyNumber = () => {
+                    const num = currentAdminNumber.value;
+                    if(num !== "Loading...") {
+                        navigator.clipboard.writeText(num);
+                        alert("Number Copied: " + num);
+                    }
+                };
+
+                const verifyPayment = async () => {
+                    if (!trxId.value || trxId.value.length < 6) {
+                        errorMsg.value = "Please enter a valid Transaction ID";
+                        return;
+                    }
+
+                    loading.value = true;
+                    errorMsg.value = '';
+
+                    try {
+                        const apiUrl = `${SCRIPT_URL}?trxID=${trxId.value.toUpperCase()}&apiKey=${CLIENT_API_KEY}&amount=${amount.value}`;
+                        const response = await fetch(apiUrl);
+                        const data = await response.json();
+
+                        if (data.status === "success") {
+                            
+                            await addDoc(collection(db, "deposits"), {
+                                userId: userId.value,
+                                method: method.value,
+                                amount: Number(amount.value),
+                                trxId: trxId.value.toUpperCase(),
+                                status: "approved", 
+                                type: "auto_verify",
+                                createdAt: serverTimestamp()
+                            });
+
+                            const userRef = doc(db, "users", userId.value);
+                            await updateDoc(userRef, {
+                                balance: increment(Number(amount.value))
+                            });
+
+                            paymentSuccess.value = true;
+
+                        } else {
+                            errorMsg.value = data.message || "Verification failed. Check TrxID.";
+                        }
+
+                    } catch (e) {
+                        console.error("Verification Error:", e);
+                        errorMsg.value = "Server Error or Internet Connection Issue.";
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                // 🔥 UPDATED: Computed property uses dynamic db numbers
+                const currentAdminNumber = computed(() => {
+                    return adminNumbers.value[method.value] || "Wait...";
+                });
+
+                const gatewayButtonColor = computed(() => {
+                    if(method.value === 'bkash') return 'bg-[#e2136e] hover:bg-[#c40f5f]';
+                    if(method.value === 'nagad') return 'bg-[#ec1c24] hover:bg-[#cc161d]';
+                    return 'bg-[#8c3494] hover:bg-[#722a79]';
+                });
+
+                const methodLogo = computed(() => {
+                    if(method.value === 'bkash') return 'https://seeklogo.com/images/B/bkash-logo-FBB258B90F-seeklogo.com.png';
+                    if(method.value === 'nagad') return 'https://seeklogo.com/images/N/nagad-logo-7A70CCFEE0-seeklogo.com.png';
+                    return 'https://seeklogo.com/images/D/dutch-bangla-rocket-logo-B4D1CC458D-seeklogo.com.png';
+                });
+
+                return {
+                    step, amount, method, loading, trxId, errorMsg, paymentSuccess,
+                    goToMethod, selectMethod, copyNumber, verifyPayment,
+                    gatewayButtonColor, methodLogo, currentAdminNumber
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

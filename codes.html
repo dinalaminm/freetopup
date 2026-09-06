@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Codes - CRD TOPAP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-[#F5F7FA]">
+
+    <div id="app" v-cloak>
+        <header class="bg-white shadow-sm border-b p-3 sticky top-0 z-50">
+            <h1 class="font-bold text-lg text-center text-[#101828]" style="font-family:'Sora',sans-serif;">My Gift Codes</h1>
+        </header>
+
+        <main class="container mx-auto px-4 py-4 max-w-md pb-24 min-h-screen flex flex-col">
+            
+            <div v-if="loading" class="text-center py-10">
+                <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-2xl"></i>
+            </div>
+
+            <!-- যদি কোনো কোড না থাকে -->
+            <div v-else-if="codes.length === 0" class="flex flex-col items-center justify-center flex-grow opacity-60">
+                <img src="https://cdn-icons-png.flaticon.com/512/6598/6598519.png" class="w-20 opacity-50 mb-4 grayscale">
+                <h3 class="text-gray-600 font-bold">No Codes Available</h3>
+                <p class="text-xs text-gray-400 mt-1">আপনি এখনো কোনো গিফট কোড কিনেননি।</p>
+                
+                <!-- 🔥 এই লাইনটি পরিবর্তন করা হয়েছে -->
+                <a href="topup.html" class="mt-4 bg-[#0F6E5C] text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-emerald-800 transition no-underline">Buy Now</a>
+            </div>
+
+            <!-- কোড লিস্ট -->
+            <div v-else class="space-y-3">
+                <div v-for="item in codes" :key="item.id" class="bg-white p-4 rounded-xl shadow-[0_1px_8px_rgba(16,24,40,0.06)] border border-gray-200 border-l-4 border-l-[#0F6E5C]">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-gray-800">{{ item.itemName || 'Gift Code' }}</h3>
+                        <span class="bg-[#EAF6F2] text-[#0F6E5C] text-[10px] px-2 py-0.5 rounded font-bold">UNUSED</span>
+                    </div>
+                    
+                    <div class="bg-gray-100 p-2 rounded border border-dashed border-gray-300 flex justify-between items-center">
+                        <!-- এখানে কোড দেখানো হবে (ফায়ারবেজ থেকে জেনারেট করা কোড বা আইটেম আইডি) -->
+                        <code class="font-mono text-gray-700 font-bold tracking-widest">{{ item.id.substring(0, 8).toUpperCase() }}</code>
+                        <button @click="copyCode(item.id)" class="text-emerald-600 hover:text-emerald-800"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2 text-right">Bought: {{ formatDate(item.createdAt) }}</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Nav -->
+        <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div class="grid grid-cols-5 h-16 max-w-md mx-auto">
+                <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+                <a href="add-money.html" class="nav-item"><i class="fa-solid fa-wallet"></i><span>Add Money</span></a>
+                <a href="orders.html" class="nav-item"><i class="fa-solid fa-file-invoice"></i><span>My Orders</span></a>
+                <a href="codes.html" class="nav-item active"><i class="fa-solid fa-gift"></i><span>My Codes</span></a>
+                <a href="account.html" class="nav-item"><i class="fa-solid fa-user"></i><span>Account</span></a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { createApp, ref, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyACUK207BRvtR5yc1UhYLS9FlMitVVlrrE",
+          authDomain: "freetopup-fd263.firebaseapp.com",
+          projectId: "freetopup-fd263",
+          storageBucket: "freetopup-fd263.firebasestorage.app",
+          messagingSenderId: "756173302110",
+          appId: "1:756173302110:web:14227664f6b5d14d9047cf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        createApp({
+            setup() {
+                const loading = ref(true);
+                const codes = ref([]);
+                const userId = localStorage.getItem('userId');
+
+                const fetchCodes = async () => {
+                    if(!userId) {
+                        loading.value = false;
+                        return;
+                    }
+                    try {
+                        // আমরা orders কালেকশন থেকে ডাটা আনছি যেখানে type = 'code'
+                        const q = query(
+                            collection(db, "orders"), 
+                            where("userId", "==", userId),
+                            where("type", "==", "code") 
+                        );
+                        const snap = await getDocs(q);
+                        codes.value = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const copyCode = (code) => {
+                    navigator.clipboard.writeText(code);
+                    alert("Code Copied!");
+                };
+
+                const formatDate = (timestamp) => {
+                    if (!timestamp) return '';
+                    // Firebase Timestamp to JS Date
+                    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                };
+
+                onMounted(fetchCodes);
+
+                return { loading, codes, copyCode, formatDate };
+            }
+        }).mount('#app');
+    </script>
+    
+    <style>
+        .nav-item {
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            font-size: 10px; 
+            font-weight: 500;
+            color: #64748b; 
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item i { 
+            font-size: 18px; 
+            margin-bottom: 4px; 
+        }
+
+        .nav-item.active { 
+            color: #0F6E5C; 
+            font-weight: 700; 
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</body>
+</html>

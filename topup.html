@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shells Top-up - CRD TOPAP</title>
+    
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;900&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [v-cloak] { display: none !important; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+        /* Active States */
+        .game-active { border-color: #0F6E5C; background-color: #EAF6F2; transform: scale(1.05); }
+        .pkg-active { border: 2px solid #0F6E5C; background-color: #EAF6F2; position: relative; }
+        .check-badge { position: absolute; top: -8px; right: -8px; background: #0F6E5C; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Modal Animation */
+        .pop-enter-active { transition: all 0.3s ease-out; }
+        .pop-leave-active { transition: all 0.2s ease-in; }
+        .pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+    <div id="app" v-cloak class="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col">
+        
+        <!-- 🔥 CUSTOM POPUP MODAL 🔥 -->
+        <transition name="pop">
+            <div v-if="popup.show" class="fixed inset-0 z-[100] flex items-center justify-center px-6">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closePopup"></div>
+                <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm relative z-10 text-center">
+                    
+                    <div v-if="popup.type === 'success'" class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+                        <i class="fa-solid fa-check text-3xl"></i>
+                    </div>
+                    <div v-else-if="popup.type === 'confirm'" class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                        <i class="fa-solid fa-cart-shopping text-3xl"></i>
+                    </div>
+                    <div v-else class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ popup.title }}</h3>
+                    <p class="text-sm text-gray-500 mb-6 leading-relaxed">{{ popup.msg }}</p>
+                    
+                    <!-- Confirm Buttons -->
+                    <div v-if="popup.type === 'confirm'" class="flex gap-3">
+                        <button @click="closePopup" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold">Cancel</button>
+                        <button @click="confirmPurchase" class="flex-1 bg-[#0F6E5C] text-white py-3 rounded-xl font-bold shadow-lg">Confirm</button>
+                    </div>
+                    
+                    <!-- Single Button -->
+                    <button v-else @click="closePopup" 
+                        :class="popup.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'"
+                        class="w-full text-white py-3 rounded-xl font-bold transition shadow-lg">
+                        {{ popup.btnText }}
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Header -->
+        <header class="bg-[#0F6E5C] text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-white text-lg"><i class="fa-solid fa-arrow-left"></i></a>
+                <div>
+                    <span class="font-black text-lg tracking-wide uppercase block leading-none" style="font-family:'Sora',sans-serif;">Shells</span>
+                    <span class="text-[10px] font-medium opacity-80 tracking-widest uppercase">Topup Center</span>
+                </div>
+            </div>
+            <div class="bg-white/20 px-3 py-1 rounded-full flex items-center gap-2 border border-white/10">
+               <i class="fa-solid fa-wallet text-xs"></i>
+               <span class="font-bold text-sm">{{ userBalance }} ৳</span>
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="flex flex-col justify-center items-center flex-grow h-[80vh]">
+            <div class="animate-spin w-12 h-12 border-4 border-[#0F6E5C] border-t-transparent rounded-full mb-4"></div>
+            <p class="text-gray-500 font-bold text-sm animate-pulse">Loading Top-up Center...</p>
+        </div>
+
+        <div v-else class="flex-grow pb-32">
+            
+            <!-- Games Slider -->
+            <div class="bg-white p-4 pb-2 border-b border-gray-100">
+                <h2 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">Select Game</h2>
+                <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                    
+                    <!-- Shells (Default) -->
+                    <div @click="selectGame(null)" class="flex flex-col items-center min-w-[70px] cursor-pointer group">
+                        <div :class="!selectedGame ? 'game-active shadow-md' : 'border-gray-200'" class="w-[70px] h-[70px] rounded-2xl border-2 bg-white p-1 transition duration-200">
+                            <img src="https://cdn-icons-png.flaticon.com/512/12411/12411656.png" class="w-full h-full object-contain p-1">
+                        </div>
+                        <span :class="!selectedGame ? 'text-[#0F6E5C]' : 'text-gray-500'" class="text-[10px] font-bold mt-2 text-center transition">Shells</span>
+                    </div>
+
+                    <!-- Games List -->
+                    <div v-for="game in games" :key="game.id" @click="selectGame(game)" class="flex flex-col items-center min-w-[70px] cursor-pointer group">
+                        <div :class="selectedGame?.id === game.id ? 'game-active shadow-md' : 'border-gray-200'" class="w-[70px] h-[70px] rounded-2xl border-2 bg-white overflow-hidden transition duration-200">
+                            <img :src="game.image" @error="handleImageError" class="w-full h-full object-cover">
+                        </div>
+                        <span :class="selectedGame?.id === game.id ? 'text-[#0F6E5C]' : 'text-gray-500'" class="text-[10px] font-bold mt-2 text-center leading-3 transition">{{ game.name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Info -->
+            <div class="m-3 p-4 rounded-xl bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-lg flex justify-between items-center relative overflow-hidden">
+                <div class="absolute right-0 top-0 bottom-0 w-32 bg-white/5 skew-x-12"></div>
+                <div class="z-10">
+                    <h3 class="font-bold text-sm text-[#E8A33D] mb-1"><i class="fa-solid fa-bolt"></i> Instant Delivery</h3>
+                    <p class="text-[10px] text-gray-300">Official Digital Distributor</p>
+                </div>
+                <div class="z-10 text-right">
+                    <p class="text-xs text-gray-400">Selected</p>
+                    <p class="font-bold text-sm">{{ selectedGame ? selectedGame.name : 'Garena Shells' }}</p>
+                </div>
+            </div>
+
+            <!-- Packages Grid -->
+            <div class="px-3">
+                <h2 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-tags"></i> Select Package
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div v-for="pkg in packages" :key="pkg.id" 
+                         @click="selectedPkg = pkg"
+                         :class="selectedPkg?.id === pkg.id ? 'pkg-active shadow-md' : 'border-gray-200 hover:border-gray-300'"
+                         class="bg-white border rounded-xl p-3 flex items-center justify-between cursor-pointer transition h-16">
+                         
+                        <div class="flex items-center gap-2">
+                            <img src="https://cdn-icons-png.flaticon.com/512/12411/12411656.png" class="w-6 h-6">
+                            <span class="font-black text-gray-800 text-sm">{{ pkg.amount }}</span>
+                        </div>
+                        
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] text-gray-400 font-bold">BDT</span>
+                            <span class="text-[#0F6E5C] font-bold text-base">{{ pkg.price }}</span>
+                        </div>
+
+                        <div v-if="selectedPkg?.id === pkg.id" class="check-badge"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sticky Footer -->
+        <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-3 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)] max-w-md z-40">
+            <div class="flex justify-between items-center gap-4">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-500 font-bold uppercase">Total Payable</span>
+                    <span class="font-black text-2xl text-gray-900">৳ {{ selectedPkg ? selectedPkg.price : 0 }}</span>
+                </div>
+
+                <button @click="handleBuy" 
+                    :disabled="!selectedPkg"
+                    :class="!selectedPkg ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#0F6E5C] hover:bg-[#0B5446] text-white shadow-lg shadow-emerald-200'"
+                    class="flex-1 py-3.5 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2">
+                    <span>Buy Now</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { createApp, ref, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyACUK207BRvtR5yc1UhYLS9FlMitVVlrrE",
+            authDomain: "freetopup-fd263.firebaseapp.com",
+            projectId: "freetopup-fd263",
+            storageBucket: "freetopup-fd263.firebasestorage.app",
+            messagingSenderId: "756173302110",
+            appId: "1:756173302110:web:14227664f6b5d14d9047cf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        createApp({
+            setup() {
+                const loading = ref(true);
+                const games = ref([]);
+                const packages = ref([]);
+                const selectedGame = ref(null);
+                const selectedPkg = ref(null);
+                const userBalance = ref(0);
+                const popup = ref({ show: false, type: '', title: '', msg: '', btnText: 'OK' });
+                
+                const userId = localStorage.getItem('userId');
+
+                // --- Popup Logic ---
+                const showPopup = (type, title, msg, btnText = "OK") => {
+                    popup.value = { show: true, type, title, msg, btnText };
+                };
+
+                const closePopup = () => {
+                    if (popup.value.btnText === 'Add Money') {
+                        window.location.href = 'add-money.html';
+                        return;
+                    }
+                    if (popup.value.type === 'success') {
+                        window.location.href = 'orders.html';
+                    } else {
+                        popup.value.show = false;
+                    }
+                };
+
+                // --- Data Fetching ---
+                const fetchData = async () => {
+                    try {
+                        if(userId) {
+                            const userSnap = await getDoc(doc(db, "users", userId));
+                            if(userSnap.exists()) userBalance.value = userSnap.data().balance || 0;
+                        }
+
+                        const gamesSnap = await getDocs(collection(db, "topup_games"));
+                        games.value = gamesSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                        const pkgSnap = await getDocs(collection(db, "topup_packages"));
+                        packages.value = pkgSnap.docs.map(d => ({id: d.id, ...d.data()})).sort((a, b) => a.price - b.price);
+
+                    } catch (e) {
+                        console.error(e);
+                        showPopup('error', 'Error', 'Failed to load data.');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const selectGame = (game) => {
+                    selectedGame.value = game;
+                    selectedPkg.value = null; // Reset package on game change
+                };
+
+                const handleImageError = (e) => e.target.src = "https://placehold.co/100x100?text=Game";
+
+                // --- Purchase Flow ---
+                const handleBuy = () => {
+                    if (!userId) return window.location.href = 'login.html';
+                    if (!selectedPkg.value) return;
+
+                    if (userBalance.value < selectedPkg.value.price) {
+                        showPopup('error', 'Insufficient Balance', 'Please add money to your wallet.', 'Add Money');
+                        return;
+                    }
+
+                    const itemName = selectedGame.value 
+                        ? `${selectedGame.value.name} - ${selectedPkg.value.amount} Shells`
+                        : `${selectedPkg.value.amount} Garena Shells`;
+
+                    showPopup('confirm', 'Confirm Purchase', `Buy ${itemName} for ${selectedPkg.value.price} Tk?`, 'Confirm');
+                };
+
+                const confirmPurchase = async () => {
+                    // Close confirm modal & show loading state (optional UI enhancement)
+                    popup.value.show = false; 
+                    loading.value = true;
+
+                    try {
+                        const itemName = selectedGame.value 
+                            ? `${selectedGame.value.name} - ${selectedPkg.value.amount} Shells`
+                            : `${selectedPkg.value.amount} Garena Shells`;
+
+                        await addDoc(collection(db, "orders"), {
+                            userId: userId,
+                            itemName: itemName,
+                            price: selectedPkg.value.price,
+                            type: 'voucher',
+                            status: 'pending',
+                            createdAt: serverTimestamp()
+                        });
+
+                        const userRef = doc(db, "users", userId);
+                        await updateDoc(userRef, { balance: increment(-selectedPkg.value.price) });
+
+                        showPopup('success', 'Purchase Successful', 'Your code will be delivered shortly!', 'Check Orders');
+
+                    } catch (e) {
+                        console.error(e);
+                        showPopup('error', 'Failed', 'Transaction failed. Please try again.');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                onMounted(fetchData);
+
+                return { 
+                    loading, games, packages, selectedGame, selectedPkg, userBalance, 
+                    selectGame, handleBuy, confirmPurchase, handleImageError, popup, closePopup 
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

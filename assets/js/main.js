@@ -4,12 +4,13 @@ import { createApp, ref, onMounted, nextTick } from "https://unpkg.com/vue@3/dis
 
 // আপনার কনফিগারেশন
 const firebaseConfig = {
-  apiKey: "AIzaSyACUK207BRvtR5yc1UhYLS9FlMitVVlrrE",
-  authDomain: "freetopup-fd263.firebaseapp.com",
-  projectId: "freetopup-fd263",
-  storageBucket: "freetopup-fd263.firebasestorage.app",
-  messagingSenderId: "756173302110",
-  appId: "1:756173302110:web:14227664f6b5d14d9047cf"
+  apiKey: "AIzaSyAxFnJP3DwWC31P0jP3E_30r38qtUol0iQ",
+  authDomain: "creatorrivo.firebaseapp.com",
+  databaseURL: "https://creatorrivo-default-rtdb.firebaseio.com",
+  projectId: "creatorrivo",
+  storageBucket: "creatorrivo.firebasestorage.app",
+  messagingSenderId: "862514355485",
+  appId: "1:862514355485:web:d984df8a56e1fb1d51d5f4"
 };
 
 const app = initializeApp(firebaseConfig);

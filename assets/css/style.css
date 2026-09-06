@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;900&family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
+
+/* ============================================================
+   CRD TOPAP — Design Tokens
+   Primary (emerald): #0F6E5C   |  Primary dark: #0B5446
+   Accent (gold):      #E8A33D  |  Ink (dark text): #101828
+   Surface:            #F5F7FA
+   ============================================================ */
+:root {
+    --brand: #0F6E5C;
+    --brand-dark: #0B5446;
+    --accent: #E8A33D;
+    --ink: #101828;
+    --surface: #F5F7FA;
+}
+
+/* গ্লোবাল সেটিংস */
+body {
+    font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    background-color: var(--surface);
+}
+
+[v-cloak] { display: none !important; }
+
+/* ফন্ট স্টাইল */
+.font-serif { font-family: 'Sora', sans-serif; font-weight: 800; }
+.font-bengali { font-family: 'Noto Sans Bengali', sans-serif; }
+
+/* সেকশন টাইটেল */
+.section-title {
+    text-align: center;
+    color: var(--ink);
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* স্লাইডার ডটস */
+.swiper-pagination-bullet {
+    width: 6px; height: 6px;
+    background: #000; opacity: 0.2;
+    transition: 0.3s;
+}
+.swiper-pagination-bullet-active {
+    background: var(--brand) !important; opacity: 1;
+    width: 18px; border-radius: 4px;
+}
+
+/* প্রোডাক্ট কার্ড এনিমেশন */
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+.product-card:active { transform: scale(0.95); }
+
+/* প্রাইমারি বাটন */
+.btn-primary {
+    background: var(--brand);
+    color: white;
+    font-weight: 700;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+.btn-primary:hover { background: var(--brand-dark); }
+.btn-primary:active { transform: scale(0.97); }
+
+/* গোল্ড ব্যাজ */
+.badge-gold {
+    background: var(--accent);
+    color: var(--brand-dark);
+    font-weight: 700;
+}
+
+/* ফুটার আইকন */
+.social-icon {
+    width: 35px; height: 35px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; transition: 0.3s;
+    text-decoration: none;
+}
+.social-icon:hover { background: rgba(255,255,255,0.1); }
+
+/* সাপোর্ট বাটন */
+.support-btn {
+    display: flex; align-items: center; gap: 1rem;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+}
+
+/* === BOTTOM NAVIGATION FIX === */
+.nav-item {
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+    font-size: 10px; 
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.nav-item i { 
+    font-size: 18px; 
+    margin-bottom: 4px; 
+}
+
+/* একটিভ মেনুর স্টাইল */
+.nav-item.active { 
+    color: var(--brand);
+    font-weight: 700; 
+}
+
+.nav-item:active {
+    transform: scale(0.9);
+}
+
+/* আইফোনের জন্য সেফ এরিয়া */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }

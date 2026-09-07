@@ -120,8 +120,8 @@
                 <div v-if="gameItems.length > 0">
                     <h2 class="section-title"><i class="fa-solid fa-gamepad text-blue-600"></i> POPULAR GAMES</h2>
                     <div class="grid grid-cols-3 gap-3">
-                        <div v-for="item in gameItems" :key="item.id" @click="goToDetails(item.id)" class="product-card relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer">
-                            <img :src="item.image" @error="handleImageError" class="absolute inset-0 w-full h-full object-cover">
+                        <div v-for="item in gameItems" :key="item.id" @click="goToDetails(item.id)" class="product-card relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer bg-white">
+                            <img :src="item.image" @error="handleImageError" class="absolute inset-0 w-full h-full object-contain">
                             <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent px-2 pt-5 pb-1.5">
                                 <h3 class="text-[10px] font-bold text-center text-white leading-tight truncate">{{ item.name }}</h3>
                             </div>
@@ -133,8 +133,8 @@
                 <div v-if="otherItems.length > 0">
                     <h2 class="section-title"><i class="fa-solid fa-ticket text-green-600"></i> CARDS & SUBSCRIPTION</h2>
                     <div class="grid grid-cols-3 gap-3">
-                        <div v-for="item in otherItems" :key="item.id" @click="goToDetails(item.id)" class="product-card relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer">
-                            <img :src="item.image" @error="handleImageError" class="absolute inset-0 w-full h-full object-cover">
+                        <div v-for="item in otherItems" :key="item.id" @click="goToDetails(item.id)" class="product-card relative aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer bg-white">
+                            <img :src="item.image" @error="handleImageError" class="absolute inset-0 w-full h-full object-contain">
                             <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent px-2 pt-5 pb-1.5">
                                 <h3 class="text-[10px] font-bold text-center text-white leading-tight truncate">{{ item.name }}</h3>
                             </div>

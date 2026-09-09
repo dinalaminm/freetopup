@@ -71,6 +71,24 @@ body {
 .btn-primary:hover { background: var(--brand-dark); }
 .btn-primary:active { transform: scale(0.97); }
 
+/* ব্র্যান্ড লোগো — সার্কেল বর্ডার ফ্রেম */
+.brand-logo-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px solid var(--brand);
+    background: #ffffff;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+}
+.brand-logo-circle img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+}
+
 /* গোল্ড ব্যাজ */
 .badge-gold {
     background: var(--accent);

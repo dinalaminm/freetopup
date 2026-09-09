@@ -152,7 +152,7 @@
                         <button @click="paymentMethod = 'direct'" 
                             :class="paymentMethod === 'direct' ? 'bg-[#e2136e] text-white' : 'bg-gray-100 text-gray-600'"
                             class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-bolt"></i> Auto Pay
+                            <i class="fa-solid fa-bolt"></i> Direct Pay
                         </button>
                     </div>
 
@@ -168,7 +168,7 @@
                         </a>
                     </div>
 
-                    <!-- Auto Payment (Direct) Options -->
+                    <!-- Direct Payment (Manual Admin Verification) Options -->
                     <div v-if="paymentMethod === 'direct'" class="space-y-3 mb-4">
                         
                         <!-- Gateway Select -->
@@ -200,6 +200,7 @@
                         <div class="text-left mt-3">
                             <label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Transaction ID (TrxID)</label>
                             <input v-model="trxId" type="text" placeholder="e.g. 9G765KH..." class="w-full border border-gray-300 py-2.5 px-4 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 transition uppercase text-center tracking-widest">
+                            <p class="text-[10px] text-gray-400 mt-2 text-center">Your payment will be manually reviewed by our admin team</p>
                         </div>
                     </div>
 
@@ -216,7 +217,7 @@
                                 class="w-full text-white py-3.5 rounded-xl font-bold text-base transition flex justify-center items-center gap-2 active:scale-95">
                             <span v-if="verifying" class="loader border-white/30 border-t-white"></span>
                             <span v-else>
-                                {{ !isLoggedIn ? 'Login to Purchase' : (paymentMethod === 'wallet' ? 'Pay from Wallet' : 'Verify & Buy Now') }}
+                                {{ !isLoggedIn ? 'Login to Purchase' : (paymentMethod === 'wallet' ? 'Pay from Wallet' : 'Submit Order') }}
                             </span> 
                             <i v-if="!verifying" class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -247,9 +248,6 @@
         // ==========================================
         // CONFIGURATION
         // ==========================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygDTGvbG7sUTPAt2lO2iMsPHprZRlP7WjAwq4n4Q3D1SZduenpNPUaayf_c2VsTqC0Xw/exec"; 
-        const CLIENT_API_KEY = "KEY_LUYAAAKNC_1770036903949"; 
-
         const firebaseConfig = {
   apiKey: "AIzaSyAxFnJP3DwWC31P0jP3E_30r38qtUol0iQ",
   authDomain: "creatorrivo.firebaseapp.com",
@@ -395,7 +393,7 @@
                         }
                     } else {
                         if(!trxId.value || trxId.value.length < 6) return showPopup('error', 'Invalid TrxID', 'Please enter a valid TrxID.');
-                        await verifyAndPlaceOrder();
+                        await placeDirectOrder();
                     }
                 };
 
@@ -431,36 +429,30 @@
                     }
                 };
 
-                const verifyAndPlaceOrder = async () => {
+                const placeDirectOrder = async () => {
                     verifying.value = true;
                     try {
+                        // Manual review: just record the order as "pending".
+                        // It is only confirmed after an admin manually verifies the TrxID
+                        // and approves it from the admin panel.
                         const amount = selectedPackage.value.price;
-                        const apiUrl = `${SCRIPT_URL}?trxID=${trxId.value.toUpperCase()}&apiKey=${CLIENT_API_KEY}&amount=${amount}`;
-                        const response = await fetch(apiUrl);
-                        const data = await response.json();
+                        await addDoc(collection(db, "orders"), {
+                            userId: userId.value,
+                            packageName: selectedPackage.value.name,
+                            price: amount,
+                            playerId: playerId.value,
+                            productName: product.value.name,
+                            category: product.value.category,
+                            status: 'pending',
+                            paymentMethod: directGateway.value,
+                            trxId: trxId.value.toUpperCase(),
+                            createdAt: serverTimestamp()
+                        });
 
-                        if (data.status === "success") {
-                            await addDoc(collection(db, "orders"), {
-                                userId: userId.value,
-                                packageName: selectedPackage.value.name,
-                                price: amount,
-                                playerId: playerId.value,
-                                productName: product.value.name,
-                                category: product.value.category,
-                                status: 'processing',
-                                paymentMethod: directGateway.value + '_auto',
-                                trxId: trxId.value.toUpperCase(),
-                                isAutoVerified: true,
-                                createdAt: serverTimestamp()
-                            });
-                            
-                            showPopup('success', 'Payment Verified!', 'Your order has been placed successfully.', 'Go to Orders');
-                        } else {
-                            showPopup('error', 'Verification Failed', data.message || 'TrxID mismatch or amount incorrect.');
-                        }
+                        showPopup('success', 'Order Submitted!', 'Your payment will be manually reviewed by our admin team.', 'Go to Orders');
                     } catch (e) {
                         console.error(e);
-                        showPopup('error', 'Error', 'Connection failed. Try again.');
+                        showPopup('error', 'Error', 'Something went wrong. Try again.');
                     } finally {
                         verifying.value = false;
                     }

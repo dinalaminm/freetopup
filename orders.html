@@ -139,22 +139,12 @@
 
     <!-- Logic -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { createApp, ref, computed, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
 
-        const firebaseConfig = {
-  apiKey: "AIzaSyAxFnJP3DwWC31P0jP3E_30r38qtUol0iQ",
-  authDomain: "creatorrivo.firebaseapp.com",
-  databaseURL: "https://creatorrivo-default-rtdb.firebaseio.com",
-  projectId: "creatorrivo",
-  storageBucket: "creatorrivo.firebasestorage.app",
-  messagingSenderId: "862514355485",
-  appId: "1:862514355485:web:d984df8a56e1fb1d51d5f4"
-};
+        import { app } from "./assets/js/firebase-config.js";
 
-        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 

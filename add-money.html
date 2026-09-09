@@ -1,4 +1,4 @@
-<!-- START OF FILE Auto Payment Integrated (Dynamic Numbers & Balance Update) -->
+<!-- START OF FILE Manual Payment (Admin Approval, Dynamic Numbers) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +38,7 @@
         <header class="bg-white shadow-sm border-b p-3 flex items-center sticky top-0 z-50">
             <a v-if="step === 1" href="index.html" class="mr-3 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></a>
             <button v-else @click="step--" class="mr-3 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></button>
-            <h1 class="font-bold text-lg text-[#101828]" style="font-family:'Sora',sans-serif;">Add Money (Auto)</h1>
+            <h1 class="font-bold text-lg text-[#101828]" style="font-family:'Sora',sans-serif;">Add Money</h1>
         </header>
 
         <!-- MAIN CONTENT -->
@@ -52,8 +52,8 @@
                             <div class="w-16 h-16 bg-gradient-to-br from-[#0F6E5C] to-[#0B5446] rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-md">
                                 <i class="fa-solid fa-bolt text-2xl"></i>
                             </div>
-                            <h2 class="text-xl font-bold text-gray-800">Instant Recharge</h2>
-                            <p class="text-xs text-gray-500 mt-1">Automated Payment Gateway</p>
+                            <h2 class="text-xl font-bold text-gray-800">Add Money</h2>
+                            <p class="text-xs text-gray-500 mt-1">Manual Verification by Admin</p>
                         </div>
                         <label class="block text-sm font-bold text-gray-600 mb-2">Enter Amount</label>
                         <div class="relative mb-6">
@@ -105,19 +105,20 @@
             <transition name="fade">
                 <div v-if="step === 3" class="h-full flex flex-col justify-center">
                     
-                    <!-- SUCCESS VIEW -->
-                    <div v-if="paymentSuccess" class="bg-white p-8 rounded-2xl shadow-lg border border-green-200 text-center">
-                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
-                            <i class="fa-solid fa-check text-4xl"></i>
+                    <!-- SUBMITTED / PENDING REVIEW VIEW -->
+                    <div v-if="paymentSuccess" class="bg-white p-8 rounded-2xl shadow-lg border border-amber-200 text-center">
+                        <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
+                            <i class="fa-solid fa-hourglass-half text-4xl"></i>
                         </div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
-                        <p class="text-gray-500 mb-6">Your balance has been updated.</p>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Payment Submitted!</h2>
+                        <p class="text-gray-500 mb-6">Your request is pending admin approval. Balance will be added once verified.</p>
                         <div class="bg-gray-50 p-4 rounded-xl text-left mb-6 text-sm">
                             <div class="flex justify-between mb-2"><span>Amount:</span> <span class="font-bold">৳ {{ amount }}</span></div>
                             <div class="flex justify-between mb-2"><span>Method:</span> <span class="font-bold capitalize">{{ method }}</span></div>
-                            <div class="flex justify-between"><span>TrxID:</span> <span class="font-bold text-gray-700">{{ trxId }}</span></div>
+                            <div class="flex justify-between mb-2"><span>TrxID:</span> <span class="font-bold text-gray-700">{{ trxId }}</span></div>
+                            <div class="flex justify-between"><span>Status:</span> <span class="font-bold text-amber-600">Pending Review</span></div>
                         </div>
-                        <a href="account.html" class="block w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">Go to Wallet</a>
+                        <a href="account.html" class="block w-full bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700">Back to Account</a>
                     </div>
 
                     <!-- VERIFICATION FORM VIEW -->
@@ -152,15 +153,15 @@
                             <i class="fa-solid fa-circle-exclamation"></i> {{ errorMsg }}
                         </div>
 
-                        <button @click="verifyPayment" :disabled="loading" 
+                        <button @click="submitPayment" :disabled="loading" 
                             :class="gatewayButtonColor"
                             class="w-full text-white py-3.5 rounded-xl font-bold shadow-lg transition flex justify-center items-center gap-2 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
                             <span v-if="loading" class="loader border-white/30 border-t-white"></span>
-                            <span v-else>VERIFY PAYMENT</span>
+                            <span v-else>SUBMIT PAYMENT</span>
                         </button>
 
                         <p class="text-[10px] text-gray-400 mt-4">
-                            Automated System by DinGet API Manager
+                            Your payment will be manually reviewed by our admin team
                         </p>
                     </div>
 
@@ -187,14 +188,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         // 🔥 Import update: getDoc যুক্ত করা হয়েছে
-        import { getFirestore, collection, addDoc, serverTimestamp, updateDoc, doc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { createApp, ref, computed, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
-
-        // ==========================================
-        // CONFIGURATION
-        // ==========================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygDTGvbG7sUTPAt2lO2iMsPHprZRlP7WjAwq4n4Q3D1SZduenpNPUaayf_c2VsTqC0Xw/exec"; 
-        const CLIENT_API_KEY = "KEY_LUYAAAKNC_1770036903949"; 
 
         const firebaseConfig = {
   apiKey: "AIzaSyAxFnJP3DwWC31P0jP3E_30r38qtUol0iQ",
@@ -279,7 +274,7 @@
                     }
                 };
 
-                const verifyPayment = async () => {
+                const submitPayment = async () => {
                     if (!trxId.value || trxId.value.length < 6) {
                         errorMsg.value = "Please enter a valid Transaction ID";
                         return;
@@ -289,36 +284,23 @@
                     errorMsg.value = '';
 
                     try {
-                        const apiUrl = `${SCRIPT_URL}?trxID=${trxId.value.toUpperCase()}&apiKey=${CLIENT_API_KEY}&amount=${amount.value}`;
-                        const response = await fetch(apiUrl);
-                        const data = await response.json();
+                        // Manual review: just record the deposit request as "pending".
+                        // Balance is credited only after an admin approves it from the admin panel.
+                        await addDoc(collection(db, "deposits"), {
+                            userId: userId.value,
+                            method: method.value,
+                            amount: Number(amount.value),
+                            trxId: trxId.value.toUpperCase(),
+                            status: "pending",
+                            type: "manual",
+                            createdAt: serverTimestamp()
+                        });
 
-                        if (data.status === "success") {
-                            
-                            await addDoc(collection(db, "deposits"), {
-                                userId: userId.value,
-                                method: method.value,
-                                amount: Number(amount.value),
-                                trxId: trxId.value.toUpperCase(),
-                                status: "approved", 
-                                type: "auto_verify",
-                                createdAt: serverTimestamp()
-                            });
-
-                            const userRef = doc(db, "users", userId.value);
-                            await updateDoc(userRef, {
-                                balance: increment(Number(amount.value))
-                            });
-
-                            paymentSuccess.value = true;
-
-                        } else {
-                            errorMsg.value = data.message || "Verification failed. Check TrxID.";
-                        }
+                        paymentSuccess.value = true;
 
                     } catch (e) {
-                        console.error("Verification Error:", e);
-                        errorMsg.value = "Server Error or Internet Connection Issue.";
+                        console.error("Submit Error:", e);
+                        errorMsg.value = "Server Error or Internet Connection Issue. Please try again.";
                     } finally {
                         loading.value = false;
                     }
@@ -343,7 +325,7 @@
 
                 return {
                     step, amount, method, loading, trxId, errorMsg, paymentSuccess,
-                    goToMethod, selectMethod, copyNumber, verifyPayment,
+                    goToMethod, selectMethod, copyNumber, submitPayment,
                     gatewayButtonColor, methodLogo, currentAdminNumber
                 };
             }
